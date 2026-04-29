@@ -3,7 +3,7 @@
 // =====================================================================
 
 // ▼▼▼ PASTE YOUR APPS SCRIPT WEB APP URL HERE ▼▼▼
-const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBw0Lg1EBJI6-uhywfUXkMIt1GefSMVADa1XMc_obW2luks4M9pW01DY-2kUMKUjY/exec';
 
 const POLL_MS = 30000; // 30 seconds
 let _lastHash = null, _pollTimer = null;
