@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ABSL Production Planning Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a56db'/><text x='16' y='22' text-anchor='middle' font-size='16' font-weight='700' fill='white' font-family='Arial'>AB</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">
+      <span>AB</span>
+    </div>
+    <div class="header-info">
+      <div class="header-title">ABSL Production Planning Dashboard</div>
+      <div class="header-sub">AKIJ Resource Group · Asphalt SBU</div>
+    </div>
+  </div>
+  <div class="header-center">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">Month</label>
+        <select id="monthFilter" class="select-input" onchange="filterByMonth()">
+          <option value="Apr26" selected>Apr '26</option>
+          <option value="Mar26">Mar '26</option>
+          <option value="Feb26">Feb '26</option>
+          <option value="Jan26">Jan '26</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">SKU</label>
+        <select id="skuFilter" class="select-input" onchange="filterBySKU()">
+          <option value="ALL">All SKUs</option>
+          <option value="WC">Wearing Course</option>
+          <option value="BC">Binder Course</option>
+          <option value="PC">Prime Coat</option>
+          <option value="TC">Tack Coat</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">RM</label>
+        <select id="rmFilter" class="select-input" onchange="filterByRM()">
+          <option value="ALL">All RM</option>
+          <option value="CS">Coarse Sand FM 2.2-3.0</option>
+          <option value="SD">Stone Dust (0-5mm)</option>
+          <option value="BT">Bitumen 60/70</option>
+          <option value="LS">Limestone 10-20mm</option>
+          <option value="CR">Crushed Stone 05-10mm</option>
+          <option value="KE">Kerosene</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="refresh-btn" id="refreshBtn" onclick="loadSheetData()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      Refresh
+    </button>
+    <div class="sync-status" id="syncStatus">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncLabel">Loading…</span>
+    </div>
+    <div class="live-clock" id="liveClock"></div>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav-tabs">
+  <button class="nav-tab active" onclick="switchTab('overview',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Overview
+  </button>
+  <button class="nav-tab" onclick="switchTab('daily',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Daily Planning
+  </button>
+  <button class="nav-tab" onclick="switchTab('rm',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
+    RM Analysis
+  </button>
+  <button class="nav-tab" onclick="switchTab('monthwise',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Monthwise Demand
+  </button>
+  <button class="nav-tab" onclick="switchTab('sku',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    SKU Overview
+  </button>
+  <div class="tab-right">
+    <span class="sheet-link-label">Live Source:</span>
+    <a href="https://docs.google.com/spreadsheets/d/1-Cjzhy5ESC-gVDM5Nn3S4sjFQhM5ZJyonzlWhTzpMt4/edit" target="_blank" class="sheet-link">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Google Sheet
+    </a>
+  </div>
+</nav>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <div class="loading-text">Fetching live data from Google Sheets…</div>
+    <div class="loading-sub" id="loadingMsg">Connecting to ABSL Monthly Production Planning</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main" id="mainContent" style="display:none">
+
+  <!-- KPI CARDS -->
+  <section class="kpi-section">
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-top">
+          <div class="kpi-icon-wrap blue-bg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a56db" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <div class="kpi-trend" id="trend-plan-prod">—</div>
+        </div>
+        <div class="kpi-value" id="kpi-plan-prod">—</div>
+        <div class="kpi-label">Planned Production</div>
+        <div class="kpi-sub">MT till date</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill blue-fill" id="bar-plan-prod" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-top">
+          <div class="kpi-icon-wrap green-bg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#057a55" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <div class="kpi-trend" id="trend-actual-prod">—</div>
+        </div>
+        <div class="kpi-value" id="kpi-actual-prod">—</div>
+        <div class="kpi-label">Actual Production</div>
+        <div class="kpi-sub">MT till date</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill green-fill" id="bar-actual-prod" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-purple">
+        <div class="kpi-top">
+          <div class="kpi-icon-wrap purple-bg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7e3af2" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </div>
+          <div class="kpi-trend" id="trend-plan-del">—</div>
+        </div>
+        <div class="kpi-value" id="kpi-plan-del">—</div>
+        <div class="kpi-label">Planned Delivery</div>
+        <div class="kpi-sub">MT till date</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill purple-fill" id="bar-plan-del" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-orange">
+        <div class="kpi-top">
+          <div class="kpi-icon-wrap orange-bg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/></svg>
+          </div>
+          <div class="kpi-trend" id="trend-actual-del">—</div>
+        </div>
+        <div class="kpi-value" id="kpi-actual-del">—</div>
+        <div class="kpi-label">Actual Delivery</div>
+        <div class="kpi-sub">MT till date</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill orange-fill" id="bar-actual-del" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-top">
+          <div class="kpi-icon-wrap red-bg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c81e1e" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="kpi-trend kpi-trend-red" id="trend-rm">—</div>
+        </div>
+        <div class="kpi-value kpi-red-val" id="kpi-rm">—</div>
+        <div class="kpi-label">RM Critical Items</div>
+        <div class="kpi-sub">DOS &lt; 1 day</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill red-fill" id="bar-rm" style="width:0%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= OVERVIEW TAB ======= -->
+  <div id="tab-overview" class="tab-pane active">
+    <div class="section-header">
+      <h2 class="section-title">Production Performance</h2>
+      <div class="legend-row">
+        <span class="legend-item"><span class="ldot blue"></span>Planned</span>
+        <span class="legend-item"><span class="ldot green"></span>Actual</span>
+      </div>
+    </div>
+    <div class="chart-row full">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Production Plan vs Actual — Daily (Apr '26)</div>
+            <div class="chart-card-sub">MT per day · All SKUs combined</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="prodOverviewChart"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-row two-col">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Delivery — Actual vs Planned</div>
+            <div class="chart-card-sub">MT per day · Apr '26</div>
+          </div>
+          <div class="legend-row">
+            <span class="legend-item"><span class="ldot blue"></span>Planned</span>
+            <span class="legend-item"><span class="ldot orange"></span>Actual</span>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="deliveryOverviewChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">SKU-wise Production Split</div>
+            <div class="chart-card-sub">Actual MT · Apr '26</div>
+          </div>
+        </div>
+        <div class="chart-wrap donut-wrap"><canvas id="skuDonutChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Achievement Summary -->
+    <div class="section-header" style="margin-top:8px">
+      <h2 class="section-title">SKU Achievement Summary</h2>
+    </div>
+    <div class="achieve-grid" id="achieveGrid"><!-- filled by JS --></div>
+  </div>
+
+  <!-- ======= DAILY TAB ======= -->
+  <div id="tab-daily" class="tab-pane">
+    <div class="section-header">
+      <h2 class="section-title">Daily Planning Analysis</h2>
+    </div>
+    <div class="chart-row full">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Daily Production — Planned vs Actual (MT)</div>
+            <div class="chart-card-sub">Green bars = actual ≥ plan · Red bars = below plan</div>
+          </div>
+          <div class="legend-row">
+            <span class="legend-item"><span class="ldot blue"></span>Planned</span>
+            <span class="legend-item"><span class="ldot green"></span>Above Plan</span>
+            <span class="legend-item"><span class="ldot red"></span>Below Plan</span>
+          </div>
+        </div>
+        <div class="chart-wrap tall"><canvas id="dailyProdChart"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-row two-col">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Cumulative Production (MT)</div>
+            <div class="chart-card-sub">Running total vs cumulative plan</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="cumulProdChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Daily Delivery — Actual vs Planned</div>
+            <div class="chart-card-sub">MT per day</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="dailyDelChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Daily Data Table -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">Daily Production & Delivery Data Table</div>
+          <div class="chart-card-sub">Apr '26 — Source: Google Sheets (live)</div>
+        </div>
+        <button class="export-btn" onclick="exportTableCSV('dailyTable','daily_production')">⬇ Export CSV</button>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="dailyTable">
+          <thead>
+            <tr><th>Date</th><th>Actual Prod (MT)</th><th>Planned Prod (MT)</th><th>Variance</th><th>Actual Del (MT)</th><th>Planned Del (MT)</th><th>Del Variance</th><th>Status</th></tr>
+          </thead>
+          <tbody id="dailyTableBody"><!-- filled by JS --></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= RM TAB ======= -->
+  <div id="tab-rm" class="tab-pane">
+    <div class="section-header">
+      <h2 class="section-title">Raw Material Analysis</h2>
+    </div>
+
+    <!-- Alert cards -->
+    <div class="alert-grid" id="alertGrid"><!-- filled by JS --></div>
+
+    <div class="chart-row two-col" style="margin-top:0">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">RM Consumption — Planned vs Actual (MT)</div>
+            <div class="chart-card-sub">Apr '26 Total · Red = over-consumed</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="rmBarChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Daily RM Consumption (All RMs Combined)</div>
+            <div class="chart-card-sub">MT per day · Apr '26</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="rmLineChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- DOS PO Matrix -->
+    <div class="section-header" style="margin-top:4px">
+      <h2 class="section-title">PO Decision Matrix — Days of Supply</h2>
+    </div>
+    <div class="po-grid" id="poGrid"><!-- filled by JS --></div>
+
+    <!-- RM Full Table -->
+    <div class="chart-card" style="margin-top:16px">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">RM Status Table — Apr '26</div>
+          <div class="chart-card-sub">All quantities in MT · Live from Google Sheets</div>
+        </div>
+        <button class="export-btn" onclick="exportTableCSV('rmTable','rm_status')">⬇ Export CSV</button>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="rmTable">
+          <thead>
+            <tr><th>RM Name</th><th>Entry Till Date</th><th>Closing Stock (Inv)</th><th>Closing Stock (IBOS)</th><th>Planned Consumption</th><th>Actual Consumption</th><th>Avg/Day</th><th>DOS (Inv)</th><th>DOS (IBOS)</th><th>W.R to Plan</th></tr>
+          </thead>
+          <tbody id="rmTableBody"><!-- filled by JS --></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MONTHWISE TAB ======= -->
+  <div id="tab-monthwise" class="tab-pane">
+    <div class="section-header">
+      <h2 class="section-title">Monthwise Demand & RM Planning</h2>
+    </div>
+    <div class="chart-row two-col">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Monthly RM — Planned vs Actual</div>
+            <div class="chart-card-sub">Apr '26 · MT</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="monthRMChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Monthwise Demand Trend</div>
+            <div class="chart-card-sub">Wearing Course + Binder Course · MT</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="monthDemandChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="month-summary-grid" id="monthSummaryGrid"><!-- filled by JS --></div>
+
+    <!-- Monthly RM Table -->
+    <div class="chart-card" style="margin-top:16px">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">Monthly RM Consumption Summary</div>
+          <div class="chart-card-sub" data-monthly-sub>Loading monthly RM data…</div>
+        </div>
+        <button class="export-btn" onclick="exportTableCSV('monthRMTable','monthly_rm')">⬇ Export CSV</button>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="monthRMTable">
+          <thead>
+            <tr><th>Month</th><th>RM</th><th>Monthly Plan (MT)</th><th>Actual Consumption (MT)</th><th>Ratio</th><th>Status</th></tr>
+          </thead>
+          <tbody id="monthRMTableBody"><!-- filled by JS --></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= SKU OVERVIEW TAB ======= -->
+  <div id="tab-sku" class="tab-pane">
+    <div class="section-header">
+      <h2 class="section-title">SKU-wise Production Overview</h2>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">Monthly Production Plan SKU Wise — Apr '26</div>
+          <div class="chart-card-sub">All quantities in MT unless specified · Live from Google Sheets</div>
+        </div>
+        <button class="export-btn" onclick="exportTableCSV('skuTable','sku_overview')">⬇ Export CSV</button>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="skuTable">
+          <thead>
+            <tr><th>SKU</th><th>UoM</th><th>Closing Stock</th><th>Budgeted Demand</th><th>Planned Production (Till Date)</th><th>Planned Delivery</th><th>Actual Production</th><th>Actual Delivery</th><th>Avg Daily Delivery</th><th>FG Remain</th><th>DOS</th><th>Achievement %</th></tr>
+          </thead>
+          <tbody id="skuTableBody"><!-- filled by JS --></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="chart-row two-col" style="margin-top:16px">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Production Achievement by SKU</div>
+            <div class="chart-card-sub">% vs plan</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="skuAchieveChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">RM per SKU Consumption vs Plan</div>
+            <div class="chart-card-sub">W.R to plan % · Apr '26</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="rmPerSKUChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ERROR STATE -->
+<div class="error-banner" id="errorBanner" style="display:none">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span id="errorMsg">Could not connect to Google Sheets. Showing cached data.</span>
+  <button onclick="loadSheetData()" class="retry-btn">Retry</button>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span>ABSL · AKIJ Resource Group · Operations Planning</span>
+  <span id="footerTs">Last updated: —</span>
+  <span>Data Source: <a href="https://docs.google.com/spreadsheets/d/1-Cjzhy5ESC-gVDM5Nn3S4sjFQhM5ZJyonzlWhTzpMt4/edit" target="_blank">Google Sheets</a></span>
+</footer>
+
+<script src="data.js"></script>
+<script src="charts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
