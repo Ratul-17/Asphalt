@@ -24,7 +24,7 @@ If data changed → re-render all charts & tables instantly
 ### PART 1 — Set up the Apps Script backend (5 minutes)
 
 **Step 1** — Open your Google Sheet:
-https://docs.google.com/spreadsheets/d/1-Cjzhy5ESC-gVDM5Nn3S4sjFQhM5ZJyonzlWhTzpMt4/edit
+
 
 **Step 2** — Go to **Extensions → Apps Script**
 
