@@ -27,7 +27,7 @@
       <div class="filter-group">
         <label class="filter-label">Month</label>
         <select id="monthFilter" class="select-input" onchange="filterByMonth()">
-          <option value="Apr26" selected>Apr '26</option>
+          <option value="Apr26" selected>May '26</option>
           <option value="Mar26">Mar '26</option>
           <option value="Feb26">Feb '26</option>
           <option value="Jan26">Jan '26</option>
@@ -192,7 +192,7 @@
       <div class="chart-card">
         <div class="chart-card-header">
           <div>
-            <div class="chart-card-title">Production Plan vs Actual — Daily (Apr '26)</div>
+            <div class="chart-card-title">Production Plan vs Actual — Daily (May '26)</div>
             <div class="chart-card-sub">MT per day · All SKUs combined</div>
           </div>
         </div>
@@ -204,7 +204,7 @@
         <div class="chart-card-header">
           <div>
             <div class="chart-card-title">Delivery — Actual vs Planned</div>
-            <div class="chart-card-sub">MT per day · Apr '26</div>
+            <div class="chart-card-sub">MT per day · May '26</div>
           </div>
           <div class="legend-row">
             <span class="legend-item"><span class="ldot blue"></span>Planned</span>
@@ -217,7 +217,7 @@
         <div class="chart-card-header">
           <div>
             <div class="chart-card-title">SKU-wise Production Split</div>
-            <div class="chart-card-sub">Actual MT · Apr '26</div>
+            <div class="chart-card-sub">Actual MT · May '26</div>
           </div>
         </div>
         <div class="chart-wrap donut-wrap"><canvas id="skuDonutChart"></canvas></div>
@@ -278,7 +278,7 @@
       <div class="chart-card-header">
         <div>
           <div class="chart-card-title">Daily Production & Delivery Data Table</div>
-          <div class="chart-card-sub">Apr '26 — Source: Google Sheets (live)</div>
+          <div class="chart-card-sub">May '26 — Source: Google Sheets (live)</div>
         </div>
         <button class="export-btn" onclick="exportTableCSV('dailyTable','daily_production')">⬇ Export CSV</button>
       </div>
@@ -307,7 +307,7 @@
         <div class="chart-card-header">
           <div>
             <div class="chart-card-title">RM Consumption — Planned vs Actual (MT)</div>
-            <div class="chart-card-sub">Apr '26 Total · Red = over-consumed</div>
+            <div class="chart-card-sub">May '26 Total · Red = over-consumed</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="rmBarChart"></canvas></div>
@@ -316,7 +316,7 @@
         <div class="chart-card-header">
           <div>
             <div class="chart-card-title">Daily RM Consumption (All RMs Combined)</div>
-            <div class="chart-card-sub">MT per day · Apr '26</div>
+            <div class="chart-card-sub">MT per day · May '26</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="rmLineChart"></canvas></div>
@@ -333,7 +333,7 @@
     <div class="chart-card" style="margin-top:16px">
       <div class="chart-card-header">
         <div>
-          <div class="chart-card-title">RM Status Table — Apr '26</div>
+          <div class="chart-card-title">RM Status Table — May '26</div>
           <div class="chart-card-sub">All quantities in MT · Live from Google Sheets</div>
         </div>
         <button class="export-btn" onclick="exportTableCSV('rmTable','rm_status')">⬇ Export CSV</button>
@@ -359,7 +359,7 @@
         <div class="chart-card-header">
           <div>
             <div class="chart-card-title">Monthly RM — Planned vs Actual</div>
-            <div class="chart-card-sub">Apr '26 · MT</div>
+            <div class="chart-card-sub">May '26 · MT</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="monthRMChart"></canvas></div>
@@ -406,7 +406,7 @@
     <div class="chart-card">
       <div class="chart-card-header">
         <div>
-          <div class="chart-card-title">Monthly Production Plan SKU Wise — Apr '26</div>
+          <div class="chart-card-title">Monthly Production Plan SKU Wise — May '26</div>
           <div class="chart-card-sub">All quantities in MT unless specified · Live from Google Sheets</div>
         </div>
         <button class="export-btn" onclick="exportTableCSV('skuTable','sku_overview')">⬇ Export CSV</button>
@@ -435,7 +435,7 @@
         <div class="chart-card-header">
           <div>
             <div class="chart-card-title">RM per SKU Consumption vs Plan</div>
-            <div class="chart-card-sub">W.R to plan % · Apr '26</div>
+            <div class="chart-card-sub">W.R to plan % · May '26</div>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="rmPerSKUChart"></canvas></div>
